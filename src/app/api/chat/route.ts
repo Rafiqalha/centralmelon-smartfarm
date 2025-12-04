@@ -1,22 +1,24 @@
-import { GoogleGenerativeAI } from "@google/generative-ai";
+import OpenAI from 'openai';
 import { NextResponse } from "next/server";
+
+// Inisialisasi client OpenAI tapi diarahkan ke Server Kolosal
+const client = new OpenAI({
+    apiKey: process.env.KOLOSAL_API_KEY,
+    baseURL: 'https://api.kolosal.ai/v1' 
+});
 
 export async function POST(req: Request) {
     try {
         const { message, history } = await req.json();
-        const apiKey = process.env.GOOGLE_AI_API_KEY;
 
-        if (!apiKey) {
-            return NextResponse.json({ error: "API Key not found" }, { status: 500 });
+        // Cek API Key
+        if (!process.env.KOLOSAL_API_KEY) {
+            return NextResponse.json({ error: "Kolosal API Key tidak ditemukan" }, { status: 500 });
         }
 
-        const genAI = new GoogleGenerativeAI(apiKey);
-        // Gunakan model yang stabil
-        const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
-
-        // Konteks Chat (System Instruction)
-        const contextPrompt = `
-
+        // --- SYSTEM PROMPT (KONTEKS UTAMA) ---
+        // Ini adalah otak dari MelonBot yang sudah kamu buat sebelumnya
+        const systemInstruction = `
         Kamu adalah "MelonBot", asisten AI cerdas dan representatif resmi dari Central Melon, sebuah perusahaan Smart Farming Premium berbasis di Blitar, Jawa Timur. 
         Fokusmu adalah memberikan informasi akurat, ramah, dan profesional terkait melon premium, budidaya modern, teknologi pertanian, serta layanan bisnis Central Melon.
         Jika ada pertanyaaan terkait siapa developer website ini, sebutkan "Website ini dikembangkan oleh Tim Qwerty untuk keperluan Hackathon."
@@ -40,7 +42,7 @@ export async function POST(req: Request) {
         - Hindari bahasa pemasaran berlebihan.
         - Jelaskan informasi teknis dengan sederhana dan akurat secara agronomi.
         - Teks harus jelas, rapi, dan mengalir secara natural.
-        - Gunakan bahasa campuran antara indonesia dengan bahasa jawa khas karesidenan kediri-blitar-tulungagung-nganjuk
+        - Gunakan bahasa campuran antara indonesia dengan bahasa jawa khas karesidenan kediri-blitar-tulungagung-nganjuk (Contoh: "Monggo", "Inggih", "Pripun", tapi tetap sopan).
 
         Aturan Ketat:
         - Jangan gunakan format Markdown dalam bentuk apa pun.
@@ -48,42 +50,50 @@ export async function POST(req: Request) {
         - Hanya gunakan plain text sepenuhnya.
         - Jika ingin menyertakan daftar, gunakan format teks biasa tanpa penomoran atau bullet.
         - Jika ada pertanyaan di luar topik melon, pertanian, bisnis Central Melon, atau teknologi agrikultur, jawab dengan sopan bahwa kamu hanya dapat membantu pada topik tersebut.
+        `;
 
-        Tujuan Utama:
-        - Menyediakan pengalaman layanan pelanggan digital yang cerdas, akurat, dan meyakinkan, sehingga pelanggan, calon pembeli, dan mitra merasa dipandu oleh asisten profesional Central Melon.
-    `;
+        // --- KONVERSI FORMAT HISTORY ---
+        // Gemini pakai format: { role: 'model', parts: [{ text: '...' }] }
+        // Kolosal/OpenAI pakai format: { role: 'assistant', content: '...' }
+        // Kita harus ubah format history dari frontend agar dimengerti Kolosal
+        const formattedHistory = history.map((msg: any) => ({
+            role: msg.role === 'model' ? 'assistant' : 'user',
+            content: msg.parts[0].text
+        }));
 
-        const chat = model.startChat({
-            history: [
-                {
-                    role: "user",
-                    parts: [{ text: contextPrompt }],
-                },
-                {
-                    role: "model",
-                    parts: [{ text: "Siap! Saya MelonBot, siap membantu pelanggan Central Melon." }],
-                },
-                ...history // Masukkan history chat sebelumnya agar nyambung
-            ],
+        // --- SUSUN PESAN UNTUK DIKIRIM ---
+        const messages = [
+            { role: "system", content: systemInstruction }, // Instruksi utama (System Prompt)
+            ...formattedHistory, // Riwayat chat sebelumnya
+            { role: "user", content: message } // Pesan user saat ini
+        ];
+
+        // --- PANGGIL API KOLOSAL ---
+        const completion = await client.chat.completions.create({
+            model: 'Claude Sonnet 4.5', // Model yang diminta juri
+            messages: messages as any,
+            temperature: 0.7, // Tingkat kreativitas jawaban
+            max_tokens: 500,  // Batas panjang jawaban
         });
 
-        const result = await chat.sendMessage(message);
-        const response = result.response;
-        let text = response.text();
+        // Ambil teks jawaban dari respon
+        let text = completion.choices[0].message.content || "";
 
+        // --- PEMBERSIHAN TEKS (Opsional tapi bagus) ---
+        // Jaga-jaga jika AI masih bandel mengeluarkan markdown
         if (text) {
             text = text
-                .replace(/\*\*/g, "") // Hapus bintang dua (bold)
-                .replace(/\*/g, "")   // Hapus bintang satu (italic/list)
-                .replace(/#/g, "")    // Hapus pagar
-                .replace(/`/g, "")    // Hapus backtick
+                .replace(/\*\*/g, "")
+                .replace(/\*/g, "")
+                .replace(/#/g, "")
+                .replace(/`/g, "")
                 .trim();
         }
 
         return NextResponse.json({ reply: text });
 
     } catch (error: any) {
-        console.error("Chat Error:", error);
-        return NextResponse.json({ error: "Maaf, MelonBot sedang istirahat sebentar." }, { status: 500 });
+        console.error("Kolosal Chat Error:", error);
+        return NextResponse.json({ error: "Maaf, MelonBot sedang istirahat sebentar (Connection Error)." }, { status: 500 });
     }
 }
