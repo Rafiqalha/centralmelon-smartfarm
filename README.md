@@ -28,7 +28,7 @@ Proyek ini dibangun sebagai solusi end-to-end yang menggabungkan perangkat keras
       </ul>
     </li>
     <li><a href="#galeri-aplikasi">Galeri Aplikasi</a></li>
-    <li><a href="#arsitektur--teknologi">Stack Teknologi</a></li>
+    <li><a href="#stack-teknologi">Stack Teknologi</a></li>
     <li><a href="#panduan-instalasi-lokal">Panduan Instalasi Lokal</a></li>
   </ol>
 </details>
@@ -71,7 +71,7 @@ Aplikasi ini mengimplementasikan teknologi *bleeding edge* (Advanced Tech Bonus)
 
 ---
 
-## Arsitektur & Teknologi
+## Stack Teknologi
 
 Kami menggunakan arsitektur modern yang *scalable* dan aman:
 
