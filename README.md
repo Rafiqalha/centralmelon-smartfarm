@@ -12,18 +12,9 @@ Proyek ini dibangun sebagai solusi end-to-end yang menggabungkan perangkat keras
 **[Lihat Live Demo Aplikasi](https://central-melon.vercel.app)**
 
 ---
-Daftar isi:
-- Tentang Projek
-- Fitur Utama
-  - AI MelonBot – Asisten Agronomi Cerdas
-  - IoT Command Center – Kontrol & Monitoring Greenhouse
-  - B2B Wholesale Portal – Pasar untuk Pembeli Industri
-  - Agro Education & Greenhouse Designer
-- Stack Teknologi
-- Panduan Instalasi Lokal
-- Lisensi
+
 <details>
-  <summary>Table of Contents</summary>
+  <summary>Daftar Isi</summary>
   <ol>
     <li>
       <a href="#tentang-proyek">Tentang Project</a>
