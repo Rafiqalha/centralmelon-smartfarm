@@ -58,8 +58,8 @@ export default function Footer() {
                         <li><Link href="/about" className="hover:text-emerald-400 transition">Tentang Kami</Link></li>
                         <li><Link href="/services" className="hover:text-emerald-400 transition">Layanan Smart Farming</Link></li>
                         <li><Link href="/products" className="hover:text-emerald-400 transition">Katalog Grosir</Link></li>
-                        <li><Link href="/career" className="hover:text-emerald-400 transition">Karir (Hiring)</Link></li>
-                        <li><Link href="/blog" className="hover:text-emerald-400 transition">Blog & Berita</Link></li>
+                        <li><Link href="#" className="hover:text-emerald-400 transition">Karir (Hiring)</Link></li>
+                        <li><Link href="#" className="hover:text-emerald-400 transition">Blog & Berita</Link></li>
                     </ul>
                 </div>
 

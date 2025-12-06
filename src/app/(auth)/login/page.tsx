@@ -78,7 +78,7 @@ export default function LoginPage() {
                     className="absolute inset-0 w-full h-full object-cover opacity-60 mix-blend-overlay"
                 />
                 <div className="absolute inset-0 bg-linear-to-t from-emerald-950 via-emerald-900/80 to-emerald-800/50"></div>
-                <div className="absolute top-0 left-0 w-full h-full opacity-10 bg-[url('/pattern.svg')] bg-repeat"></div>
+                <div className="absolute top-0 left-0 w-full h-full opacity-5 bg-[radial-gradient(#ffffff_1px,transparent_1px)] bg-size-[16px_16px]"></div>
 
                 <div className="relative z-10 p-16 flex flex-col justify-between h-full text-white">
                     <motion.div variants={itemVariants} className="bg-emerald-700/30 backdrop-blur-md p-3 rounded-2xl inline-block w-fit mb-8 border border-emerald-600/50">

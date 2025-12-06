@@ -1,86 +1,85 @@
 import OpenAI from 'openai';
 import { NextResponse } from "next/server";
 
+// Inisialisasi Client Kolosal
 const client = new OpenAI({
     apiKey: process.env.KOLOSAL_API_KEY,
-    baseURL: 'https://api.kolosal.ai/v1' 
+    baseURL: 'https://api.kolosal.ai/v1'
 });
 
 export async function POST(req: Request) {
     try {
-        const { message, history } = await req.json();
+        const { imageBase64 } = await req.json();
 
         if (!process.env.KOLOSAL_API_KEY) {
             return NextResponse.json({ error: "Kolosal API Key tidak ditemukan" }, { status: 500 });
         }
 
         const systemInstruction = `
-        Kamu adalah "MelonBot", asisten AI cerdas dan representatif resmi dari Central Melon, sebuah perusahaan Smart Farming Premium berbasis di Blitar, Jawa Timur. 
-        Fokusmu adalah memberikan informasi akurat, ramah, dan profesional terkait melon premium, budidaya modern, teknologi pertanian, serta layanan bisnis Central Melon.
-        Jika ada pertanyaaan terkait siapa developer website ini, sebutkan "Website ini dikembangkan oleh Tim Qwerty untuk keperluan Hackathon."
-        Jika ada yang bertanya yang berkaitan dengan pemesanan disuruh kehalaman kontak atau tepat disebelah kiri kamu nomornya
+        Anda adalah AI Ahli Agronomi dan Spesialis Melon (MelonLens). 
+        Tugas anda adalah menganalisis gambar buah yang diunggah.
 
-        Identitas dan Keahlian:
-        - Kamu menguasai semua varietas melon yang umum di Indonesia: Golden Apollo (Crunchy, kulit kuning mulus), Japanese Musk (Soft, aromatik), Honey Globe (manis tinggi), Inthanon (netting halus), Sweetnet, Sky Rocket, Jade, dan varietas umum pasar Asia Tenggara lainnya.
-        - Kamu memahami karakter fisik, tekstur daging, tingkat kemanisan (brix), keunggulan pascapanen, dan segmentasi pasar masing-masing varietas.
-        - Kamu ahli Smart Farming: IoT sensors, fertigation, drip irrigation, precision farming, greenhouses, dan kontrol iklim mikro.
-        - Kamu memahami alur kemitraan petani, supply chain, dan hubungan B2B untuk supermarket, hotel, dan distributor.
+        Lakukan analisis langkah demi langkah berikut:
+        1. **Deteksi Objek**: Apakah gambar ini memuat buah Melon utuh atau potongan? Jika BUKAN melon (misal: manusia, mobil, atau buah lain), kembalikan status "invalid".
+        2. **Analisis Kulit (Skin Analysis)**: 
+            - Apakah ada jaring (netting)? 
+            - Jika ada, seberapa rapat? (Tebal/Rapat/Jarang/Tidak Ada).
+            - Apa warna kulit dasarnya? (Hijau/Kuning/Putih/Krem).
+        3. **Identifikasi Varietas**: Berdasarkan tekstur kulit dan warna, tentukan jenisnya (misal: Rock Melon, Golden Apollo, Honey Globe, Inthanon, Sky Rocket, dll).
+        4. **Estimasi Kualitas Visual**: Apakah bentuknya bulat sempurna? Apakah ada bercak penyakit atau cacat fisik?
+        
+        Output WAJIB dalam format JSON murni tanpa markdown.
+        Format JSON yang diharapkan:
+        {
+            "is_melon": true,
+            "variety": "Nama Varietas (misal: Rock Melon)",
+            "skin_texture": "Deskripsi tekstur (misal: Netting tebal dan rapat)",
+            "skin_color": "Warna kulit",
+            "health_status": "Sehat / Ada Bercak / Cacat",
+            "analysis": "Kesimpulan paragraf pendek tentang kualitas melon ini.",
+            "confidence": 95
+        }
 
-        Tugasmu:
-        - Menjawab semua pertanyaan seputar produk melon Central Melon: varietas, rasa, tekstur, brix, keunggulan, penyimpanan, pemilihan kualitas, dan cara pembelian.
-        - Menjelaskan teknologi Smart Farming yang digunakan Central Melon, termasuk manfaatnya: efisiensi air, stabilitas brix, pengurangan gagal panen, dan kestabilan pasokan.
-        - Memberikan bantuan informatif bagi calon mitra, petani, reseller, dan pembeli B2B (hotel, restoran, supermarket).
-        - Menawarkan rekomendasi berdasarkan kebutuhan user, seperti memilih varietas untuk hotel, katering, cold cut, dessert, atau konsumen premium.
-        - Tetap ramah, profesional, natural, dan human-friendly. Gunakan emoji secara halus bila relevan (maksimal 1–2 per jawaban).
-
-        Gaya Bicara:
-        - Hangat, informatif, dan mudah dipahami tanpa kesan kaku.
-        - Hindari bahasa pemasaran berlebihan.
-        - Jelaskan informasi teknis dengan sederhana dan akurat secara agronomi.
-        - Teks harus jelas, rapi, dan mengalir secara natural.
-        - Gunakan bahasa campuran antara indonesia dengan bahasa jawa khas karesidenan kediri-blitar-tulungagung-nganjuk (Contoh: "Monggo", "Inggih", "Pripun", tapi tetap sopan).
-
-        Aturan Ketat:
-        - Jangan gunakan format Markdown dalam bentuk apa pun.
-        - Jangan gunakan tanda bintang dua, simbol heading, atau format penebalan teks.
-        - Hanya gunakan plain text sepenuhnya.
-        - Jika ingin menyertakan daftar, gunakan format teks biasa tanpa penomoran atau bullet.
-        - Jika ada pertanyaan di luar topik melon, pertanian, bisnis Central Melon, atau teknologi agrikultur, jawab dengan sopan bahwa kamu hanya dapat membantu pada topik tersebut.
+        Jika bukan melon:
+        {
+            "is_melon": false,
+            "analysis": "Objek yang dideteksi bukan buah melon. Mohon unggah foto buah melon yang jelas."
+        }
         `;
-
-        const formattedHistory = history.map((msg: any) => ({
-            role: msg.role === 'model' ? 'assistant' : 'user',
-            content: msg.parts[0].text
-        }));
-
-        const messages = [
-            { role: "system", content: systemInstruction }, 
-            ...formattedHistory, 
-            { role: "user", content: message }
-        ];
 
         const completion = await client.chat.completions.create({
             model: 'Claude Sonnet 4.5', 
-            messages: messages as any,
-            temperature: 0.9,
-            max_tokens: 500, 
+            messages: [
+                { role: "system", content: systemInstruction },
+                {
+                    role: "user",
+                    content: [
+                        { type: "text", text: "Analisis gambar ini dan berikan output JSON." },
+                        {
+                            type: "image_url",
+                            image_url: {
+                                url: `data:image/jpeg;base64,${imageBase64}`
+                            }
+                        }
+                    ]
+                }
+            ] as any, 
+            temperature: 0.2,
+            max_tokens: 1000,
         });
 
-        let text = completion.choices[0].message.content || "";
+        let text = completion.choices[0].message.content || "{}";
 
-        if (text) {
-            text = text
-                .replace(/\*\*/g, "")
-                .replace(/\*/g, "")
-                .replace(/#/g, "")
-                .replace(/`/g, "")
-                .trim();
-        }
+        text = text.replace(/```json/g, "").replace(/```/g, "").trim();
 
-        return NextResponse.json({ reply: text });
+        const jsonResult = JSON.parse(text);
+
+        return NextResponse.json(jsonResult);
 
     } catch (error: any) {
-        console.error("Kolosal Chat Error:", error);
-        return NextResponse.json({ error: "Maaf, MelonBot sedang istirahat sebentar (Connection Error)." }, { status: 500 });
+        console.error("Kolosal Vision Error:", error);
+        return NextResponse.json({
+            error: "Gagal memproses gambar. Pastikan format JPG/PNG dan ukuran tidak terlalu besar."
+        }, { status: 500 });
     }
 }
