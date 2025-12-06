@@ -11,6 +11,8 @@ Proyek ini dibangun sebagai solusi end-to-end yang menggabungkan perangkat keras
 
 **[Lihat Live Demo Aplikasi](https://central-melon.vercel.app)**
 
+**[Video Demo](https://drive.google.com/file/d/1XaGSzxfn1PzTlz0tHumD1Lp0DbpdN9I9/view?usp=sharing)**
+
 ---
 
 <details>
@@ -111,4 +113,10 @@ Ikuti langkah ini untuk menjalankan proyek di komputer Anda.
 git clone [https://github.com/Rafiqalha/centralmelon-smartfarm.git](https://github.com/Rafiqalha/centralmelon-smartfarm.git)
 cd central-melon
 ```
-Projek ini Dibuat oleh tim QWERTY :v
+
+### 2. Connecting API KEY
+```bash
+GOOGLE_AI_API_KEY=AIz........
+KOLOSAL_API_KEY=kol_ey........
+```
+Projek ini Dibuat oleh tim QWERTY
