@@ -7,11 +7,19 @@ Ini adalah ekosistem digital terintegrasi yang memberdayakan petani melalui tekn
 Proyek ini dibangun sebagai solusi end-to-end yang menggabungkan perangkat keras IoT, kecerdasan buatan berbasis agronomi, dan sistem manajemen rantai pasok digital, semuanya dalam satu antarmuka berbasis web.
 
 
-[![Vercel](https://img.shields.io/badge/Visit%20Website-Visit-brightgreen?style=for-the-badge&logo=vercel)](https://central-melon.vercel.app)
+<div align="center">
 
-**[Lihat Live Demo Aplikasi](https://central-melon.vercel.app)**
+  <h1>Central Melon SmartFarm</h1>
+  <p>Solusi Cerdas Budidaya Melon Premium Berbasis IoT & AI</p>
 
-**[Video Demo](https://drive.google.com/file/d/1XaGSzxfn1PzTlz0tHumD1Lp0DbpdN9I9/view?usp=sharing)**
+  <a href="https://central-melon.vercel.app">
+    <img src="https://img.shields.io/badge/LIVE_DEMO-Visit_App-2ea44f?style=for-the-badge&logo=vercel&logoColor=white" alt="Live Demo" />
+  </a>
+  <a href="https://drive.google.com/file/d/1XaGSzxfn1PzTlz0tHumD1Lp0DbpdN9I9/view?usp=sharing">
+    <img src="https://img.shields.io/badge/VIDEO_DEMO-Watch_Now-FF0000?style=for-the-badge&logo=youtube&logoColor=white" alt="Video Demo" />
+  </a>
+  
+</div>
 
 ---
 
