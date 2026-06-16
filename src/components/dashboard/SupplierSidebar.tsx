@@ -2,12 +2,12 @@
 
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
-import { LayoutDashboard, Package, TrendingUp, Settings, LogOut, Sprout, Globe, ShoppingBasket, FileText } from 'lucide-react';
+import { Package, FileText, ShoppingBasket, LogOut, Sprout, Globe } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 
 import { clearSession } from '@/core/actions/session.action';
 
-export default function Sidebar() {
+export default function SupplierSidebar() {
     const searchParams = useSearchParams();
     const view = searchParams.get('view') || 'overview';
     const router = useRouter();
@@ -18,13 +18,9 @@ export default function Sidebar() {
     };
 
     const menuItems = [
-        { name: 'Overview', icon: LayoutDashboard, id: 'overview' },
-        { name: 'Katalog B2B', icon: Package, id: 'inventory' },
-        { name: 'Request For Quotation (RFQ)', icon: FileText, id: 'rfq' },   
+        { name: 'Dashboard', icon: Package, id: 'overview' },
+        { name: 'Request For Quotation', icon: FileText, id: 'rfq' },   
         { name: 'Kontrak Suplai', icon: ShoppingBasket, id: 'contracts' },
-        { name: 'Proyeksi Panen', icon: TrendingUp, id: 'harvest' },
-        { name: 'Analisis Kualitas', icon: TrendingUp, id: 'analytics' },
-        { name: 'Pengaturan', icon: Settings, id: 'settings' },
     ];
 
     return (
@@ -37,7 +33,7 @@ export default function Sidebar() {
                     </div>
                     <div>
                         <h1 className="text-xl font-bold tracking-tight">Central Melon</h1>
-                        <p className="text-[10px] text-emerald-400 font-bold uppercase tracking-widest">Admin Panel</p>
+                        <p className="text-[10px] text-emerald-400 font-bold uppercase tracking-widest">Supplier Portal</p>
                     </div>
                 </div>
             </div>
@@ -49,7 +45,7 @@ export default function Sidebar() {
                     return (
                         <Link
                             key={item.id}
-                            href={`/dashboard?view=${item.id}`}
+                            href={`/supplier?view=${item.id}`}
                             className={`flex items-center gap-3 px-4 py-3.5 rounded-xl transition-all duration-300 font-medium ${isActive
                                 ? 'bg-emerald-600 text-white shadow-lg shadow-emerald-900/50 translate-x-1'
                                 : 'text-slate-400 hover:bg-white/5 hover:text-white'
@@ -64,17 +60,14 @@ export default function Sidebar() {
 
             {/* 3. FOOTER ACTIONS (WEBSITE & LOGOUT) */}
             <div className="p-4 border-t border-white/10 mt-auto space-y-2">
-
-                {/* --- TOMBOL KEMBALI KE WEBSITE (BARU) --- */}
                 <Link
                     href="/"
                     className="flex items-center gap-3 px-4 py-3 w-full text-left text-emerald-400 hover:bg-emerald-500/10 rounded-xl transition font-medium"
                 >
                     <Globe size={20} />
-                    Lihat Website
+                    Katalog Grosir
                 </Link>
 
-                {/* TOMBOL LOGOUT */}
                 <button
                     onClick={handleLogout}
                     className="flex items-center gap-3 px-4 py-3 w-full text-left text-red-400 hover:bg-red-500/10 rounded-xl transition font-medium"

@@ -1,130 +1,169 @@
-# Central Melon – The Future of Smart Farming Ecosystem
-
-> **Revolusi Pertanian 4.0: Platform Ekosistem Agrikultur Terintegrasi dari Hulu (IoT & AI) hingga Hilir (B2B Supply Chain).**
-
-Ini adalah ekosistem digital terintegrasi yang memberdayakan petani melalui teknologi pertanian presisi (precision farming) dan menghubungkan hasil panen mereka secara langsung ke pasar industri (B2B) seperti hotel, pabrik, dan supermarket.
-
-Proyek ini dibangun sebagai solusi end-to-end yang menggabungkan perangkat keras IoT, kecerdasan buatan berbasis agronomi, dan sistem manajemen rantai pasok digital, semuanya dalam satu antarmuka berbasis web.
-
-
 <div align="center">
-
-  <h1>Central Melon SmartFarm</h1>
-  <p>Solusi Cerdas Budidaya Melon Premium Berbasis IoT & AI</p>
-
-  <a href="https://central-melon.vercel.app">
-    <img src="https://img.shields.io/badge/LIVE_DEMO-Visit_App-2ea44f?style=for-the-badge&logo=vercel&logoColor=white" alt="Live Demo" />
-  </a>
-  <a href="https://drive.google.com/file/d/1XaGSzxfn1PzTlz0tHumD1Lp0DbpdN9I9/view?usp=sharing">
-    <img src="https://img.shields.io/badge/VIDEO_DEMO-Watch_Now-FF0000?style=for-the-badge&logo=youtube&logoColor=white" alt="Video Demo" />
-  </a>
   
+  <img src="https://raw.githubusercontent.com/lucide-icons/lucide/main/icons/sprout.svg" alt="Logo" width="80" height="80">
+
+  <h1 align="center">Central Melon SmartFarm B2B</h1>
+
+  <p align="center">
+    <strong>Sistem Informasi Manajemen Cerdas untuk Distribusi Melon B2B Premium</strong><br>
+    <em>Dilengkapi dengan Dashboard Terpisah (Admin & Supplier), Simulasi AI, dan Transaksi Internal.</em>
+  </p>
+
+  <p align="center">
+    <img src="https://img.shields.io/badge/Next.js-14-black?style=for-the-badge&logo=next.js" alt="Next.js" />
+    <img src="https://img.shields.io/badge/TypeScript-007ACC?style=for-the-badge&logo=typescript&logoColor=white" alt="TypeScript" />
+    <img src="https://img.shields.io/badge/TailwindCSS-38B2AC?style=for-the-badge&logo=tailwind-css&logoColor=white" alt="Tailwind" />
+    <img src="https://img.shields.io/badge/Prisma-2D3748?style=for-the-badge&logo=prisma&logoColor=white" alt="Prisma" />
+    <img src="https://img.shields.io/badge/MySQL-4479A1?style=for-the-badge&logo=mysql&logoColor=white" alt="MySQL" />
+  </p>
 </div>
 
----
+<br><hr><br>
 
-<details>
-  <summary>Daftar Isi</summary>
-  <ol>
-    <li>
-      <a href="#tentang-proyek">Tentang Project</a>
-    </li>
-    <li>
-      <a href="#fitur-unggulan">Fitur Unggulan</a>
+## Tim Pengembang (Kelompok 5 Praktikum Database)
+
+Proyek ini dikembangkan dan disusun oleh:
+
+<table width="100%">
+  <tr align="center" style="background-color: #f8f9fa;">
+    <th width="10%">No</th>
+    <th width="60%">Nama Mahasiswa</th>
+    <th width="30%">NIM</th>
+  </tr>
+  <tr align="center">
+    <td>1</td>
+    <td align="left"><strong>Rafiq Alhariri Andriansyah</strong></td>
+    <td><code>240605110178</code></td>
+  </tr>
+  <tr align="center">
+    <td>2</td>
+    <td align="left"><strong>Toni Abiyu Daffa</strong></td>
+    <td><code>240506110163</code></td>
+  </tr>
+  <tr align="center">
+    <td>3</td>
+    <td align="left"><strong>Muhammad Aditya Dermawan</strong></td>
+    <td><code>240605110172</code></td>
+  </tr>
+</table>
+
+<br>
+
+## Fitur Utama
+
+<table>
+  <tr>
+    <td width="50%" valign="top">
+      <h3>Panel Admin (Manajemen)</h3>
       <ul>
-        <li><a href="#1-artificial-intelligence-ai">Artificial Intelligence</a></li>
-        <li><a href="#2-real-time-iot-command-center">Real-time IoT Command Center</a></li>
-        <li><a href="#3-b2b-supply-chain-engine">B2B Supply Chain Engine</a></li>
+        <li>Monitoring Penjualan Real-Time</li>
+        <li>Manajemen Request For Quotation (RFQ)</li>
+        <li>Kelola Produk & Harga</li>
+        <li>Prediksi Panen Cerdas (Machine Learning)</li>
+        <li>Simulasi Logistik & Kualitas (Runge-Kutta)</li>
       </ul>
-    </li>
-    <li><a href="#galeri-aplikasi">Galeri Aplikasi</a></li>
-    <li><a href="#stack-teknologi">Stack Teknologi</a></li>
-    <li><a href="#panduan-instalasi-lokal">Panduan Instalasi Lokal</a></li>
-  </ol>
-</details>
+    </td>
+    <td width="50%" valign="top">
+      <h3>Panel Supplier (B2B Partner)</h3>
+      <ul>
+        <li>Katalog Produk Premium Terintegrasi</li>
+        <li>Checkout RFQ Langsung di Aplikasi</li>
+        <li>Lacak Status Pengajuan (Pending/Accepted)</li>
+        <li>Daftar Kontrak Suplai & Harga Terkunci</li>
+      </ul>
+    </td>
+  </tr>
+</table>
 
----
-## Tentang Proyek
+<br>
 
-Central Melon dirancang untuk menjawab dua tantangan utama di sektor pertanian melon:
+## Cara Menjalankan Project (Panduan Lengkap)
 
-1. Kesenjangan teknologi – Petani kesulitan mengakses alat monitoring dan rekomendasi budidaya berbasis data.
-2. Ketidakefisienan rantai pasok – Hasil panen sering kali dijual melalui perantara dengan harga tidak transparan.
+Project ini sangat mudah dijalankan. Cukup ikuti langkah-langkah di bawah ini:
 
-Dengan platform ini, petani dapat:
+### Persiapan Sistem
+1. Pastikan **Node.js** (v18+) sudah terinstall.
+2. Pastikan **XAMPP** atau MySQL Server sudah terinstall dan berjalan.
 
-- Memantau dan mengontrol lingkungan greenhouse secara real-time,
-- Mendiagnosis penyakit tanaman dan menerima rekomendasi nutrisi spesifik,
-- Menjual hasil panen langsung ke pembeli B2B dengan harga berbasis data pasar.
+### 1. Clone & Install Dependencies
+Buka terminal/command prompt, lalu jalankan:
 
----
-
-## Fitur Unggulan
-
-Aplikasi ini mengimplementasikan teknologi *bleeding edge* (Advanced Tech Bonus):
-
-### 1. Artificial Intelligence (AI)
-* **MelonBot (Kolosal/Claude 4.5):** Asisten chat cerdas untuk konsultasi penyakit dan strategi bisnis.
-* **MelonLens (Computer Vision):** Deteksi kualitas dan varietas melon hanya dari foto menggunakan Gemini 2.0 Vision.
-* **AI Greenhouse Designer:** Generator blueprint konstruksi greenhouse otomatis berdasarkan luas lahan.
-* **Procurement AI:** Asisten negosiasi harga dan estimasi kontrak untuk pembeli B2B.
-
-### 2. Real-time IoT Command Center
-* **Web Serial API:** Mengontrol hardware fisik (Arduino/Servo) langsung dari browser tanpa latensi server.
-* **Voice Feedback ("Jarvis"):** Sistem memberikan respon suara (TTS) berbahasa Indonesia saat perangkat diaktifkan.
-* **Digital Twin:** Mode simulasi realtime untuk monitoring suhu, kelembapan, dan nutrisi.
-
-### 3. B2B Supply Chain Engine
-* **Spec-First Catalog:** Katalog khusus supplier dengan data teknis (Brix, MOQ, Capacity).
-* **Dynamic Pricing:** Grafik tren harga pasar real-time.
-* **Integrated POS:** Sistem kasir offline yang tersinkronisasi dengan stok gudang online.
-
----
-
-## Stack Teknologi
-
-Kami menggunakan arsitektur modern yang *scalable* dan aman:
-
-* **Frontend:** Next.js 14 (App Router), TypeScript, Tailwind CSS.
-* **Visual & Animasi:** GSAP (GreenSock), Framer Motion, Recharts.
-* **Backend & Database:** Supabase (PostgreSQL, Auth, Storage, Realtime Subscriptions).
-* **AI Engine:** Google Gemini API & Kolosal API (OpenAI Compatible).
-* **Hardware Communication:** Web Serial API (Browser-to-Hardware).
-
----
-
-## Galeri Aplikasi
-
-| **Cinematic Homepage** | **IoT Dashboard (Dark Mode)** |
-|:---:|:---:|
-| ![Home](ss/homepage.png) | ![IoT](ss/iot-dashboard.png) |
-| *Landing page interaktif dengan GSAP* | *Kontrol hardware realtime & simulasi* |
-
-| **AI MelonLens** | **B2B Catalog** |
-|:---:|:---:|
-| ![Lens](ss/ai-melonlens.png) | ![Catalog](ss/b2b-catalog.png) |
-| *Deteksi penyakit tanaman visual* | *Portal pengadaan khusus industri* |
-
-
----
-
-## Panduan Instalasi (Lokal)
-
-Ikuti langkah ini untuk menjalankan proyek di komputer Anda.
-
-### Prasyarat
-* Node.js v18+
-* NPM / Yarn
-
-### 1. Clone Repository
 ```bash
-git clone [https://github.com/Rafiqalha/centralmelon-smartfarm.git](https://github.com/Rafiqalha/centralmelon-smartfarm.git)
-cd central-melon
+# Clone repository
+git clone https://github.com/your-repo/centralmelon-smartfarm.git
+
+# Masuk ke folder project
+cd centralmelon-smartfarm
+
+# Install semua library yang dibutuhkan
+npm install
 ```
 
-### 2. Connecting API KEY
-```bash
-GOOGLE_AI_API_KEY=AIz........
-KOLOSAL_API_KEY=kol_ey........
+### 2. Konfigurasi Database
+
+1. Buka XAMPP dan **Start MySQL**.
+2. Buka PhpMyAdmin (`http://localhost/phpmyadmin`).
+3. Anda memiliki **dua opsi** untuk mengatur database:
+
+#### Opsi A: Import Langsung (Paling Mudah!)
+- Buat database baru bernama `centralmelon_db`.
+- Klik tab **Import**, lalu pilih file `centralmelon_db.sql` yang ada di dalam folder project ini.
+- Selesai! Semua tabel dan data dummy sudah terisi.
+
+#### Opsi B: Menggunakan Prisma Migrate
+Jika Anda ingin generate dari awal menggunakan Prisma, siapkan file `.env`:
+
+```env
+# Buat file .env di folder project utama dan isi dengan ini:
+DATABASE_URL="mysql://root:@localhost:3306/centralmelon_db"
+JWT_SECRET="centralmelon_super_secret_key_2026"
 ```
-Projek ini Dibuat oleh tim QWERTY
+Kemudian jalankan perintah berikut di terminal:
+```bash
+npx prisma generate
+npx prisma db push
+```
+
+### 3. Jalankan Aplikasi
+Setelah database siap, saatnya menyalakan server lokal:
+
+```bash
+npm run dev
+```
+
+Buka browser dan akses: **http://localhost:3000**
+
+<br>
+
+## Akses Login Default
+
+Gunakan kredensial ini untuk menguji fitur otentikasi dan mencoba dashboard:
+
+<table width="100%">
+  <tr align="center" style="background-color: #f8f9fa;">
+    <th>Role / Peran</th>
+    <th>Email</th>
+    <th>Password</th>
+    <th>Dashboard URL</th>
+  </tr>
+  <tr align="center">
+    <td><b>Admin</b></td>
+    <td><code>admin@centralmelon.com</code></td>
+    <td><code>password123</code></td>
+    <td><code>/dashboard</code></td>
+  </tr>
+  <tr align="center">
+    <td><b>Supplier</b></td>
+    <td><code>budi@supplier.com</code></td>
+    <td><code>password123</code></td>
+    <td><code>/supplier</code></td>
+  </tr>
+</table>
+
+*(Catatan: Anda juga dapat membuat akun supplier baru secara langsung melalui halaman Register di website.)*
+
+<br><hr><br>
+
+<div align="center">
+  <p>Dibuat oleh Kelompok 5.</p>
+</div>

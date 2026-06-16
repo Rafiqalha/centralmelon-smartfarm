@@ -1,0 +1,170 @@
+generator client {
+  provider = "prisma-client-js"
+  engineType = "library"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id             String         @id @default(uuid())
+  name           String         @db.VarChar(100)
+  email          String         @unique @db.VarChar(150)
+  password       String         @db.VarChar(255)
+  role           Role           @default(supplier)
+  phone          String?        @db.VarChar(20)
+  company_name   String?        @db.VarChar(150)
+  created_at     DateTime       @default(now())
+  updated_at     DateTime       @updatedAt
+  
+  rfq_requests   RfqRequest[]
+  contracts      Contract[]
+
+  @@map("users")
+}
+
+enum Role {
+  admin
+  supplier
+}
+
+model Product {
+  id                  Int               @id @default(autoincrement())
+  name                String            @db.VarChar(150)
+  variety_type        String            @db.VarChar(100)
+  grade               ProductGrade
+  price_per_ton       Decimal           @db.Decimal(12, 2)
+  avg_brix_min        Int
+  avg_brix_max        Int
+  moq_kg              Int
+  supply_cap_ton_week Decimal           @db.Decimal(6, 2)
+  lead_time_days      Int
+  status              ProductStatus     @default(available)
+  image_url           String?           @db.Text
+  created_at          DateTime          @default(now())
+  updated_at          DateTime          @updatedAt
+  
+  rfq_requests        RfqRequest[]
+  contracts           Contract[]
+  harvest_forecasts   HarvestForecast[]
+
+  @@map("products")
+}
+
+enum ProductGrade {
+  AA
+  A
+  B
+}
+
+enum ProductStatus {
+  available
+  limited
+  out
+}
+
+model RfqRequest {
+  id               Int           @id @default(autoincrement())
+  user_id          String
+  product_id       Int
+  quantity_ton     Decimal       @db.Decimal(8, 2)
+  grade_requested  String        @db.VarChar(10)
+  notes            String?       @db.Text
+  status           RfqStatus     @default(pending)
+  created_at       DateTime      @default(now())
+  responded_at     DateTime?
+
+  user             User          @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  product          Product       @relation(fields: [product_id], references: [id], onDelete: Cascade)
+
+  @@map("rfq_requests")
+}
+
+enum RfqStatus {
+  pending
+  quoted
+  accepted
+  rejected
+}
+
+model Contract {
+  id                   Int               @id @default(autoincrement())
+  user_id              String
+  product_id           Int
+  volume_ton_month     Decimal           @db.Decimal(8, 2)
+  price_per_ton_locked Decimal           @db.Decimal(12, 2)
+  start_date           DateTime          @db.Date
+  end_date             DateTime          @db.Date
+  packaging            ContractPackaging @default(standard)
+  custom_label_info    String?           @db.Text
+  status               ContractStatus    @default(active)
+  signed_at            DateTime          @default(now())
+  updated_at           DateTime          @updatedAt
+
+  user                 User              @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  product              Product           @relation(fields: [product_id], references: [id], onDelete: Cascade)
+
+  @@map("contracts")
+}
+
+enum ContractPackaging {
+  standard
+  custom
+}
+
+enum ContractStatus {
+  active
+  expired
+  terminated
+}
+
+model HarvestForecast {
+  id            Int      @id @default(autoincrement())
+  product_id    Int
+  period_label  String   @db.VarChar(50)
+  forecast_ton  Decimal  @db.Decimal(8, 2)
+  actual_ton    Decimal? @db.Decimal(8, 2)
+  accuracy_pct  Float?   @db.Float
+  forecast_date DateTime @db.Date
+  harvest_date  DateTime @db.Date
+  created_at    DateTime @default(now())
+  updated_at    DateTime @updatedAt
+
+  product       Product  @relation(fields: [product_id], references: [id], onDelete: Cascade)
+
+  @@map("harvest_forecasts")
+}
+
+model SensorReading {
+  id                  BigInt   @id @default(autoincrement())
+  greenhouse_zone     String   @db.VarChar(50)
+  temperature_c       Float    @db.Float
+  humidity_pct        Float    @db.Float
+  soil_moisture_pct   Float    @db.Float
+  light_intensity_lux Float    @db.Float
+  ec_ms               Float    @db.Float
+  ph                  Float    @db.Float
+  recorded_at         DateTime @default(now())
+
+  @@map("sensor_readings")
+}
+
+model ContactMessage {
+  id         Int             @id @default(autoincrement())
+  name       String          @db.VarChar(100)
+  email      String          @db.VarChar(150)
+  phone      String?         @db.VarChar(20)
+  message    String          @db.Text
+  status     MessageStatus   @default(new)
+  created_at DateTime        @default(now())
+
+  @@map("contact_messages")
+}
+
+enum MessageStatus {
+  new
+  read
+  replied
+}

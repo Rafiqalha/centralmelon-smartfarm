@@ -1,7 +1,7 @@
 'use client';
 import { useState, useEffect } from 'react';
 import { Star, Package, Info, TrendingUp, Image as ImageIcon, ShoppingCart } from 'lucide-react';
-import { supabase } from '@/lib/supabase';
+import { getProducts } from '@/core/actions/product.action';
 import { useRouter } from 'next/navigation';
 import { useCart } from '@/context/CartContext';
 
@@ -21,23 +21,25 @@ export default function ProductShowcase() {
 
     useEffect(() => {
         const fetchProducts = async () => {
-            const { data } = await supabase.from('products').select('*').order('id', { ascending: true });
-            if (data) setProducts(data);
+            const data = await getProducts();
+            if (data) {
+                const mappedProducts = data.map((p: any) => ({
+                    id: p.id,
+                    name: p.name,
+                    category: p.variety_type || "General",
+                    grade: p.grade || "A",
+                    price: Number(p.price_per_ton),
+                    stock: p.status === 'available' ? Number(p.supply_cap_ton_week) : 0,
+                    moq: `${p.moq_kg} Kg`,
+                    image_url: p.image_url || null,
+                    description: `Melon ${p.variety_type} dengan brix rata-rata ${p.avg_brix_min}-${p.avg_brix_max}.`
+                }));
+                setProducts(mappedProducts);
+            }
             setLoading(false);
         };
 
         fetchProducts();
-
-        const channel = supabase
-            .channel('products_realtime')
-            .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'products' }, (payload) => {
-                setProducts((current) =>
-                    current.map((p) => (p.id === payload.new.id ? { ...p, ...payload.new } : p))
-                );
-            })
-            .subscribe();
-
-        return () => { supabase.removeChannel(channel); };
     }, []);
 
     const filteredProducts = filter === "All"

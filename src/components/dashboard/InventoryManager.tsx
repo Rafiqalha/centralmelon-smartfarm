@@ -1,28 +1,26 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { createClient } from '@/lib/supabase/client';
-import { Plus, Minus, Trash2, Package, Save, Loader2, Search, UploadCloud, Image as ImageIcon } from 'lucide-react';
+import { getProducts, addProduct, deleteProduct } from '@/core/actions/product.action';
+import { Plus, Trash2, Save, Loader2, UploadCloud, Image as ImageIcon } from 'lucide-react';
 import toast from 'react-hot-toast';
 
 type Product = {
     id: number;
     name: string;
-    category: string;
+    variety_type: string;
     grade: string;
-    brix: string;
-    moq: number;
-    capacity_week: number;
-    lead_time: string;
-    seasonality: string;
-    stock: number;
-    price_ton: number;
-    image_url: string;
-    description: string;
+    price_per_ton: string;
+    avg_brix_min: number;
+    avg_brix_max: number;
+    moq_kg: number;
+    supply_cap_ton_week: string;
+    lead_time_days: number;
+    status: string;
+    image_url: string | null;
 };
 
 export default function InventoryManager() {
-    const supabase = createClient();
     const [products, setProducts] = useState<Product[]>([]);
     const [loading, setLoading] = useState(true);
     const [isAddMode, setIsAddMode] = useState(false);
@@ -30,31 +28,30 @@ export default function InventoryManager() {
 
     const [newProduct, setNewProduct] = useState({
         name: '',
-        category: 'Net Melon',
+        variety_type: 'Net Melon',
         grade: 'A',
-        brix: '12-14',
-        moq: 1000,
-        capacity_week: 5,
-        lead_time: '3 Hari',
-        seasonality: 'Stable',
-        price_ton: 0,
-        stock: 0,
-        description: '',
+        price_per_ton: 0,
+        avg_brix_min: 12,
+        avg_brix_max: 14,
+        moq_kg: 1000,
+        supply_cap_ton_week: 5,
+        lead_time_days: 3,
+        status: 'available',
         image_url: ''
     });
 
     const [selectedFile, setSelectedFile] = useState<File | null>(null);
     const [previewUrl, setPreviewUrl] = useState<string | null>(null);
 
-    const fetchProducts = async () => {
+    const fetchProductsData = async () => {
         setLoading(true);
-        const { data } = await supabase.from('products').select('*').order('id', { ascending: true });
-        if (data) setProducts(data);
+        const data = await getProducts();
+        setProducts(data as any);
         setLoading(false);
     };
 
     useEffect(() => {
-        fetchProducts();
+        fetchProductsData();
     }, []);
 
     const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -68,12 +65,17 @@ export default function InventoryManager() {
     const uploadImage = async (file: File): Promise<string | null> => {
         try {
             setUploading(true);
-            const fileName = `${Date.now()}-${file.name.replace(/\s/g, '-')}`;
-            const { error } = await supabase.storage.from('products').upload(fileName, file);
-            if (error) throw error;
+            const formData = new FormData();
+            formData.append('file', file);
 
-            const { data } = supabase.storage.from('products').getPublicUrl(fileName);
-            return data.publicUrl;
+            const res = await fetch('/api/upload', {
+                method: 'POST',
+                body: formData
+            });
+
+            const data = await res.json();
+            if (!data.success) throw new Error(data.error);
+            return data.url;
         } catch (error) {
             toast.error("Gagal upload gambar");
             return null;
@@ -92,38 +94,36 @@ export default function InventoryManager() {
             if (url) finalImageUrl = url;
         }
 
-        const payload = { ...newProduct, image_url: finalImageUrl };
-        const { error } = await supabase.from('products').insert(payload);
+        const res = await addProduct({
+            ...newProduct,
+            grade: newProduct.grade as any,
+            status: newProduct.status as any,
+            image_url: finalImageUrl
+        });
 
-        if (!error) {
+        if (res.success) {
             setIsAddMode(false);
-            fetchProducts();
+            fetchProductsData();
             toast.success("Produk B2B Berhasil Ditambahkan!");
 
             setNewProduct({
-                name: '', category: 'Net Melon', grade: 'A', brix: '', moq: 1000,
-                capacity_week: 5, lead_time: '3 Hari', seasonality: 'Stable',
-                price_ton: 0, stock: 0, description: '', image_url: ''
+                name: '', variety_type: 'Net Melon', grade: 'A', price_per_ton: 0,
+                avg_brix_min: 12, avg_brix_max: 14, moq_kg: 1000, supply_cap_ton_week: 5,
+                lead_time_days: 3, status: 'available', image_url: ''
             });
             setSelectedFile(null);
             setPreviewUrl(null);
         } else {
-            toast.error("Gagal: " + error.message);
+            toast.error("Gagal: " + res.error);
         }
         setLoading(false);
     };
 
-    const updateStock = async (id: number, currentStock: number, change: number) => {
-        const newStock = currentStock + change;
-        if (newStock < 0) return;
-        setProducts(prev => prev.map(p => p.id === id ? { ...p, stock: newStock } : p));
-        await supabase.from('products').update({ stock: newStock }).eq('id', id);
-    };
-
     const handleDelete = async (id: number) => {
         if (!confirm("Hapus produk ini dari katalog?")) return;
-        await supabase.from('products').delete().eq('id', id);
-        setProducts(prev => prev.filter(p => p.id !== id));
+        setLoading(true);
+        await deleteProduct(id);
+        fetchProductsData();
         toast.success("Produk dihapus");
     };
 
@@ -134,7 +134,7 @@ export default function InventoryManager() {
             <div className="flex justify-between items-center mb-8">
                 <div>
                     <h3 className="text-2xl font-bold text-slate-900">Manajemen Katalog B2B</h3>
-                    <p className="text-gray-500 text-sm mt-1">Atur spesifikasi teknis dan ketersediaan stok grosir.</p>
+                    <p className="text-gray-500 text-sm mt-1">Atur spesifikasi teknis melon untuk RFQ.</p>
                 </div>
                 <button
                     onClick={() => setIsAddMode(!isAddMode)}
@@ -157,8 +157,8 @@ export default function InventoryManager() {
                                 <input required placeholder="Contoh: Golden Apollo" className={inputClass} value={newProduct.name} onChange={e => setNewProduct({ ...newProduct, name: e.target.value })} />
                             </div>
                             <div>
-                                <label className="text-xs font-bold text-gray-500 uppercase mb-1 block">Kategori</label>
-                                <select className={inputClass} value={newProduct.category} onChange={e => setNewProduct({ ...newProduct, category: e.target.value })}>
+                                <label className="text-xs font-bold text-gray-500 uppercase mb-1 block">Tipe Varietas</label>
+                                <select className={inputClass} value={newProduct.variety_type} onChange={e => setNewProduct({ ...newProduct, variety_type: e.target.value })}>
                                     <option>Net Melon</option>
                                     <option>Smooth Skin</option>
                                     <option>Exotic</option>
@@ -166,7 +166,7 @@ export default function InventoryManager() {
                             </div>
                             <div>
                                 <label className="text-xs font-bold text-gray-500 uppercase mb-1 block">Harga / Ton (IDR)</label>
-                                <input required type="number" placeholder="0" className={inputClass} value={newProduct.price_ton || ''} onChange={e => setNewProduct({ ...newProduct, price_ton: Number(e.target.value) })} />
+                                <input required type="number" placeholder="0" className={inputClass} value={newProduct.price_per_ton || ''} onChange={e => setNewProduct({ ...newProduct, price_per_ton: Number(e.target.value) })} />
                             </div>
                         </div>
 
@@ -182,37 +182,41 @@ export default function InventoryManager() {
                                     </select>
                                 </div>
                                 <div>
-                                    <label className="text-xs font-bold text-gray-500 uppercase mb-1 block">Brix</label>
-                                    <input placeholder="14-16" className={inputClass} value={newProduct.brix} onChange={e => setNewProduct({ ...newProduct, brix: e.target.value })} />
+                                    <label className="text-xs font-bold text-gray-500 uppercase mb-1 block">Status</label>
+                                    <select className={inputClass} value={newProduct.status} onChange={e => setNewProduct({ ...newProduct, status: e.target.value })}>
+                                        <option value="available">Tersedia</option>
+                                        <option value="limited">Terbatas</option>
+                                        <option value="out">Habis</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div className="grid grid-cols-2 gap-4">
+                                <div>
+                                    <label className="text-xs font-bold text-gray-500 uppercase mb-1 block">Min Brix</label>
+                                    <input type="number" placeholder="12" className={inputClass} value={newProduct.avg_brix_min || ''} onChange={e => setNewProduct({ ...newProduct, avg_brix_min: Number(e.target.value) })} />
+                                </div>
+                                <div>
+                                    <label className="text-xs font-bold text-gray-500 uppercase mb-1 block">Max Brix</label>
+                                    <input type="number" placeholder="14" className={inputClass} value={newProduct.avg_brix_max || ''} onChange={e => setNewProduct({ ...newProduct, avg_brix_max: Number(e.target.value) })} />
                                 </div>
                             </div>
                             <div className="grid grid-cols-2 gap-4">
                                 <div>
                                     <label className="text-xs font-bold text-gray-500 uppercase mb-1 block">MOQ (Kg)</label>
-                                    <input type="number" placeholder="1000" className={inputClass} value={newProduct.moq || ''} onChange={e => setNewProduct({ ...newProduct, moq: Number(e.target.value) })} />
+                                    <input type="number" placeholder="1000" className={inputClass} value={newProduct.moq_kg || ''} onChange={e => setNewProduct({ ...newProduct, moq_kg: Number(e.target.value) })} />
                                 </div>
                                 <div>
-                                    <label className="text-xs font-bold text-gray-500 uppercase mb-1 block">Stok Awal</label>
-                                    <input type="number" placeholder="0" className={inputClass} value={newProduct.stock || ''} onChange={e => setNewProduct({ ...newProduct, stock: Number(e.target.value) })} />
+                                    <label className="text-xs font-bold text-gray-500 uppercase mb-1 block">Cap. (Ton/Wk)</label>
+                                    <input type="number" step="0.1" placeholder="5" className={inputClass} value={newProduct.supply_cap_ton_week || ''} onChange={e => setNewProduct({ ...newProduct, supply_cap_ton_week: Number(e.target.value) })} />
                                 </div>
-                            </div>
-                            <div>
-                                <label className="text-xs font-bold text-gray-500 uppercase mb-1 block">Supply Cap (Ton/Week)</label>
-                                <input type="number" placeholder="5" className={inputClass} value={newProduct.capacity_week || ''} onChange={e => setNewProduct({ ...newProduct, capacity_week: Number(e.target.value) })} />
                             </div>
                         </div>
 
                         {/* Kolom 3: Logistik & Gambar */}
                         <div className="space-y-4">
-                            <div className="grid grid-cols-2 gap-4">
-                                <div>
-                                    <label className="text-xs font-bold text-gray-500 uppercase mb-1 block">Lead Time</label>
-                                    <input placeholder="3 Hari" className={inputClass} value={newProduct.lead_time} onChange={e => setNewProduct({ ...newProduct, lead_time: e.target.value })} />
-                                </div>
-                                <div>
-                                    <label className="text-xs font-bold text-gray-500 uppercase mb-1 block">Seasonality</label>
-                                    <input placeholder="Stable" className={inputClass} value={newProduct.seasonality} onChange={e => setNewProduct({ ...newProduct, seasonality: e.target.value })} />
-                                </div>
+                            <div>
+                                <label className="text-xs font-bold text-gray-500 uppercase mb-1 block">Lead Time (Hari)</label>
+                                <input type="number" placeholder="3" className={inputClass} value={newProduct.lead_time_days || ''} onChange={e => setNewProduct({ ...newProduct, lead_time_days: Number(e.target.value) })} />
                             </div>
 
                             {/* Upload Gambar */}
@@ -233,11 +237,6 @@ export default function InventoryManager() {
                         </div>
                     </div>
 
-                    <div className="mb-6">
-                        <label className="text-xs font-bold text-gray-500 uppercase mb-1 block">Deskripsi Teknis</label>
-                        <textarea placeholder="Jelaskan tekstur, aroma, dan ketahanan simpan..." className={inputClass} rows={2} value={newProduct.description} onChange={e => setNewProduct({ ...newProduct, description: e.target.value })} />
-                    </div>
-
                     <button disabled={loading || uploading} className="w-full py-4 bg-emerald-600 text-white rounded-xl font-bold hover:bg-emerald-700 transition shadow-lg shadow-emerald-200 flex items-center justify-center gap-2 disabled:opacity-70">
                         {(loading || uploading) ? <Loader2 className="animate-spin" /> : <Save size={20} />}
                         {uploading ? 'Mengupload Gambar...' : 'Simpan ke Katalog B2B'}
@@ -252,8 +251,8 @@ export default function InventoryManager() {
                         <tr className="text-gray-500 text-xs uppercase tracking-wider font-bold">
                             <th className="p-4 pl-6">Produk</th>
                             <th className="p-4">Specs (Grade/Brix)</th>
-                            <th className="p-4">Kapasitas Supply</th>
-                            <th className="p-4 text-center">Stok Gudang</th>
+                            <th className="p-4">Logistik (Cap/MOQ)</th>
+                            <th className="p-4 text-center">Status</th>
                             <th className="p-4 text-right pr-6">Action</th>
                         </tr>
                     </thead>
@@ -266,23 +265,24 @@ export default function InventoryManager() {
                                     </div>
                                     <div>
                                         <p className="font-bold text-slate-900">{p.name}</p>
-                                        <p className="text-xs text-gray-500">{p.category}</p>
+                                        <p className="text-xs text-gray-500">{p.variety_type}</p>
                                     </div>
                                 </td>
                                 <td className="p-4">
-                                    <span className="bg-slate-100 text-slate-600 px-2 py-1 rounded text-xs font-bold mr-2">{p.grade}</span>
-                                    <span className="text-slate-500 text-xs">{p.brix}</span>
+                                    <span className="bg-slate-100 text-slate-600 px-2 py-1 rounded text-xs font-bold mr-2">Grade {p.grade}</span>
+                                    <span className="text-slate-500 text-xs">Brix: {p.avg_brix_min}-{p.avg_brix_max}</span>
                                 </td>
                                 <td className="p-4">
-                                    <p className="font-medium text-slate-800">{p.capacity_week} Ton/Wk</p>
-                                    <p className="text-xs text-gray-400">MOQ: {p.moq} Kg</p>
+                                    <p className="font-medium text-slate-800">{p.supply_cap_ton_week} Ton/Wk</p>
+                                    <p className="text-xs text-gray-400">MOQ: {p.moq_kg} Kg | Lead: {p.lead_time_days} hr</p>
                                 </td>
-                                <td className="p-4">
-                                    <div className="flex items-center justify-center gap-2 bg-white border border-gray-200 rounded-lg w-fit mx-auto px-2 py-1 shadow-sm">
-                                        <button onClick={() => updateStock(p.id, p.stock, -10)} className="w-6 h-6 rounded hover:bg-red-100 text-slate-400 hover:text-red-600 flex items-center justify-center transition"><Minus size={12} /></button>
-                                        <span className={`font-mono font-bold w-10 text-center ${p.stock === 0 ? 'text-red-500' : 'text-slate-800'}`}>{p.stock}</span>
-                                        <button onClick={() => updateStock(p.id, p.stock, 10)} className="w-6 h-6 rounded hover:bg-emerald-100 text-slate-400 hover:text-emerald-600 flex items-center justify-center transition"><Plus size={12} /></button>
-                                    </div>
+                                <td className="p-4 text-center">
+                                    <span className={`px-2 py-1 rounded-full text-xs font-bold ${
+                                        p.status === 'available' ? 'bg-emerald-100 text-emerald-700' : 
+                                        p.status === 'limited' ? 'bg-amber-100 text-amber-700' : 'bg-red-100 text-red-700'
+                                    }`}>
+                                        {p.status.toUpperCase()}
+                                    </span>
                                 </td>
                                 <td className="p-4 text-right pr-6">
                                     <button onClick={() => handleDelete(p.id)} className="p-2 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition"><Trash2 size={18} /></button>

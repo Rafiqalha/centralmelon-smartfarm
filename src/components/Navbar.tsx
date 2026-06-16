@@ -4,9 +4,9 @@ import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { Menu, X, Sprout, LogOut, LayoutDashboard, User as UserIcon, ChevronDown, ShoppingCart } from 'lucide-react';
-import { createClient } from '@/lib/supabase/client';
-import { User } from '@supabase/supabase-js';
 import { useCart } from '@/context/CartContext';
+import { getSession, clearSession } from '@/core/actions/session.action';
+import { SessionPayload } from '@/lib/auth';
 
 const NAV_LINKS = [
     { name: 'Home', href: '/' },
@@ -21,40 +21,18 @@ export default function Navbar() {
     const pathname = usePathname();
     const { totalItems } = useCart();
 
-    const supabase = createClient();
-
     const [isScrolled, setIsScrolled] = useState(false);
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
     const [isProfileOpen, setIsProfileOpen] = useState(false);
-    const [user, setUser] = useState<User | null>(null);
-    const [role, setRole] = useState<string | null>(null);
+    const [user, setUser] = useState<SessionPayload | null>(null);
 
     useEffect(() => {
         const fetchUserData = async () => {
-            const { data: { session } } = await supabase.auth.getSession();
-            setUser(session?.user ?? null);
-
-            if (session?.user) {
-                const { data } = await supabase
-                    .from('profiles')
-                    .select('role')
-                    .eq('id', session.user.id)
-                    .single();
-                setRole(data?.role ?? 'customer');
-            } else {
-                setRole(null);
-            }
+            const session = await getSession();
+            setUser(session);
         };
 
         fetchUserData();
-
-        const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-            setUser(session?.user ?? null);
-            if (!session) setRole(null);
-            else fetchUserData();
-        });
-
-        return () => subscription.unsubscribe();
     }, []);
 
     useEffect(() => {
@@ -77,10 +55,9 @@ export default function Navbar() {
     const logoBgClass = isSolidNavbar ? 'bg-emerald-500 text-white' : 'bg-white text-emerald-600';
 
     const handleLogout = async () => {
-        await supabase.auth.signOut();
+        await clearSession();
         setIsProfileOpen(false);
         setUser(null);
-        setRole(null);
         router.push('/');
         router.refresh();
     };
@@ -146,8 +123,10 @@ export default function Navbar() {
                                         : 'bg-white/10 border-white/20 hover:bg-white/20 text-white backdrop-blur-sm'
                                     }`}
                             >
-                                {user.user_metadata.avatar_url ? (
-                                    <img src={user.user_metadata.avatar_url} alt="Profile" className="w-8 h-8 rounded-full border-2 border-emerald-500 object-cover" />
+                                {user.name ? (
+                                    <div className="w-8 h-8 bg-emerald-500 rounded-full flex items-center justify-center text-white shadow-sm font-bold text-xs">
+                                        {user.name.charAt(0).toUpperCase()}
+                                    </div>
                                 ) : (
                                     <div className="w-8 h-8 bg-emerald-500 rounded-full flex items-center justify-center text-white shadow-sm">
                                         <UserIcon size={16} />
@@ -155,10 +134,10 @@ export default function Navbar() {
                                 )}
                                 <div className="text-left hidden lg:block">
                                     <p className="text-xs font-bold leading-none max-w-[100px] truncate">
-                                        {user.user_metadata.full_name || 'User'}
+                                        {user.name || 'User'}
                                     </p>
                                     <p className={`text-[9px] leading-none mt-1 uppercase font-bold ${isSolidNavbar ? 'text-emerald-600' : 'text-emerald-300'}`}>
-                                        {role}
+                                        {user.role}
                                     </p>
                                 </div>
                                 <ChevronDown size={14} className={`transition-transform duration-300 ${isProfileOpen ? 'rotate-180' : ''}`} />
@@ -171,7 +150,7 @@ export default function Navbar() {
                                         <p className="text-sm font-bold text-slate-900 truncate">{user.email}</p>
                                     </div>
                                     <div className="p-2 space-y-1">
-                                        {role === 'admin' && (
+                                        {user.role === 'admin' && (
                                             <Link href="/dashboard" onClick={() => setIsProfileOpen(false)} className="flex items-center gap-3 px-3 py-2.5 text-sm font-medium text-slate-700 hover:bg-emerald-50 hover:text-emerald-700 rounded-xl transition-colors">
                                                 <LayoutDashboard size={18} className="text-emerald-600" /> Dashboard Admin
                                             </Link>
@@ -233,13 +212,15 @@ export default function Navbar() {
                     {user ? (
                         <div className="bg-gray-50 p-4 rounded-2xl mt-auto">
                             <div className="flex items-center gap-3 mb-4">
-                                <img src={user.user_metadata.avatar_url || 'https://via.placeholder.com/40'} className="w-12 h-12 rounded-full border-2 border-white shadow-sm" />
+                                <div className="w-12 h-12 bg-emerald-500 rounded-full flex items-center justify-center text-white shadow-sm font-bold text-lg border-2 border-white">
+                                    {user.name.charAt(0).toUpperCase()}
+                                </div>
                                 <div>
-                                    <p className="font-bold text-slate-900">{user.user_metadata.full_name}</p>
-                                    <p className="text-xs text-slate-500 uppercase">{role}</p>
+                                    <p className="font-bold text-slate-900">{user.name}</p>
+                                    <p className="text-xs text-slate-500 uppercase">{user.role}</p>
                                 </div>
                             </div>
-                            {role === 'admin' && (
+                            {user.role === 'admin' && (
                                 <Link href="/dashboard" onClick={() => setIsMobileMenuOpen(false)}>
                                     <button className="w-full py-3 bg-emerald-600 text-white rounded-xl font-bold flex items-center justify-center gap-2 shadow-lg mb-2">
                                         <LayoutDashboard size={20} /> Dashboard

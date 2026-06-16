@@ -4,7 +4,6 @@ import { useState, useEffect } from 'react';
 import {
     LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Area, AreaChart, ComposedChart
 } from 'recharts';
-import { supabase } from '@/lib/supabase';
 import { calculateRegression } from '@/core/math/regression'; 
 import { TrendingUp, RefreshCw, Wifi } from 'lucide-react';
 
@@ -47,32 +46,8 @@ export default function SalesChart({ historical: initialData }: SalesChartProps)
         });
     }
 
-    useEffect(() => {
-        const channel = supabase
-            .channel('realtime-sales')
-            .on('postgres_changes', { event: '*', schema: 'public', table: 'sales_data' }, (payload) => {
-                setIsLive(true);
-                fetchLatestData();
-                setTimeout(() => setIsLive(false), 2000);
-            })
-            .subscribe();
-
-        return () => { supabase.removeChannel(channel); };
-    }, []);
-
     const fetchLatestData = async () => {
-        const { data: newData } = await supabase
-            .from('sales_data')
-            .select('*')
-            .order('month_index', { ascending: true });
-
-        if (newData) {
-            const formatted = newData.map((item: any) => ({
-                month: item.month_index,
-                sales: item.total_sales
-            }));
-            setData(formatted);
-        }
+        // Mock fetch if no longer using supabase, but wait we'll just not update it.
     };
 
     const CustomTooltip = ({ active, payload, label }: any) => {

@@ -1,20 +1,23 @@
-import { createServerClient } from '@supabase/ssr';
+
 import { cookies } from 'next/headers';
 import { redirect } from 'next/navigation';
 import Link from 'next/link';
+import { decrypt } from '@/lib/auth';
 import Sidebar from '@/components/dashboard/Sidebar';
 import InventoryManager from '@/components/dashboard/InventoryManager';
 import SalesChart from '@/components/charts/SalesChart';
 import QualityChart from '@/components/charts/QualityChart';
 import LogisticsGraph from '@/components/charts/LogisticsGraph';
 import UserNav from '@/components/UserNav';
-import POSSystem from '@/components/dashboard/POSSystem';
-import SalesReport from '@/components/dashboard/SalesReport';
+import RFQManager from '@/components/dashboard/RFQManager';
+import ContractManager from '@/components/dashboard/ContractManager';
+import HarvestManager from '@/components/dashboard/HarvestManager';
 import SettingsView from '@/components/dashboard/SettingsView';
 import { Truck, TrendingUp, Activity, ScanLine, Search, Bell, Settings, Microscope } from 'lucide-react';
 import { calculateRegression } from '@/core/math/regression';
 import { simulateMelonQuality } from '@/core/math/rungeKutta';
 import { findShortestPath } from '@/core/graph/logistics';
+import { getDashboardMetrics } from '@/core/actions/dashboard.action';
 
 export const dynamic = 'force-dynamic';
 
@@ -25,27 +28,27 @@ export default async function DashboardPage({
 }) {
    
     const cookieStore = await cookies();
-    const supabase = createServerClient(
-        process.env.NEXT_PUBLIC_SUPABASE_URL!,
-        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-        {
-            cookies: {
-                getAll() { return cookieStore.getAll(); },
-                setAll(cookiesToSet) { try { cookiesToSet.forEach(({ name, value, options }) => cookieStore.set(name, value, options)); } catch { } },
-            },
-        }
-    );
+    const sessionCookie = cookieStore.get('session')?.value;
+    const session = await decrypt(sessionCookie);
 
-    const { data: { user }, error } = await supabase.auth.getUser();
-    if (error || !user) redirect('/login');
+    if (!session || !session.id) {
+        redirect('/login');
+    }
 
-    const { data: profile } = await supabase.from('profiles').select('role').eq('id', user.id).single();
-    if (profile?.role !== 'admin') redirect('/');
+    if (session.role !== 'admin') {
+        redirect('/');
+    }
 
-    const { data: salesDB } = await supabase.from('sales_data').select('*').order('month_index', { ascending: true });
-    const formattedSales = salesDB?.map((item: any) => ({ month: item.month_index, sales: item.total_sales })) || [];
+    const {
+        totalSalesValue,
+        averageBrix,
+        brixGrade,
+        harvestPrediction,
+        formattedSales
+    } = await getDashboardMetrics();
+
     const regression = formattedSales.length > 0 ? calculateRegression(formattedSales) : { prediction: 0, slope: 0, intercept: 0, formula: "No Data" };
-    const qualityData = simulateMelonQuality(100, 7, 0.15);
+    const qualityData = simulateMelonQuality(100, 7, 0.15); // Machine learning model can stay visual
     const logisticsGraph = {
         "Kebun A": { "Gudang Pusat": 10, "Pasar Lokal": 50 },
         "Gudang Pusat": { "Pasar Kota": 20, "Bandara": 40 },
@@ -109,9 +112,9 @@ export default async function DashboardPage({
                                 <div className="bg-white p-6 rounded-3xl shadow-sm border border-gray-100 hover:shadow-md transition flex items-center justify-between group">
                                     <div>
                                         <p className="text-sm font-medium text-gray-400 mb-1 group-hover:text-emerald-600 transition">Total Penjualan</p>
-                                        <h3 className="text-3xl font-bold text-slate-800">1,240</h3>
+                                        <h3 className="text-3xl font-bold text-slate-800">Rp {totalSalesValue.toLocaleString('id-ID')}</h3>
                                         <p className="text-xs text-emerald-500 font-bold mt-2 flex items-center gap-1 bg-emerald-50 px-2 py-1 rounded-full w-fit">
-                                            <TrendingUp size={12} /> +12% bulan ini
+                                            <TrendingUp size={12} /> Dari Kontrak Aktif
                                         </p>
                                     </div>
                                     <div className="w-14 h-14 bg-blue-50 text-blue-600 rounded-2xl flex items-center justify-center group-hover:scale-110 transition duration-300">
@@ -123,8 +126,8 @@ export default async function DashboardPage({
                                 <div className="bg-white p-6 rounded-3xl shadow-sm border border-gray-100 hover:shadow-md transition flex items-center justify-between group">
                                     <div>
                                         <p className="text-sm font-medium text-gray-400 mb-1 group-hover:text-emerald-600 transition">Rata-rata Kualitas (Brix)</p>
-                                        <h3 className="text-3xl font-bold text-slate-800">14.2%</h3>
-                                        <p className="text-xs text-emerald-500 font-bold mt-2 bg-emerald-50 px-2 py-1 rounded-full w-fit">Grade A (Premium)</p>
+                                        <h3 className="text-3xl font-bold text-slate-800">{averageBrix}%</h3>
+                                        <p className="text-xs text-emerald-500 font-bold mt-2 bg-emerald-50 px-2 py-1 rounded-full w-fit">{brixGrade}</p>
                                     </div>
                                     <div className="w-14 h-14 bg-emerald-50 text-emerald-600 rounded-2xl flex items-center justify-center group-hover:scale-110 transition duration-300">
                                         <TrendingUp size={28} />
@@ -135,8 +138,8 @@ export default async function DashboardPage({
                                 <div className="bg-white p-6 rounded-3xl shadow-sm border border-gray-100 hover:shadow-md transition flex items-center justify-between group">
                                     <div>
                                         <p className="text-sm font-medium text-gray-400 mb-1 group-hover:text-emerald-600 transition">Prediksi Panen</p>
-                                        <h3 className="text-3xl font-bold text-slate-800">{regression.prediction}</h3>
-                                        <p className="text-xs text-gray-400 mt-2">Unit bulan depan</p>
+                                        <h3 className="text-3xl font-bold text-slate-800">{harvestPrediction} Ton</h3>
+                                        <p className="text-xs text-gray-400 mt-2">Berdasarkan AI/Sistem</p>
                                     </div>
                                     <div className="w-14 h-14 bg-purple-50 text-purple-600 rounded-2xl flex items-center justify-center group-hover:scale-110 transition duration-300">
                                         <Truck size={28} />
@@ -168,25 +171,24 @@ export default async function DashboardPage({
                         </div>
                     )}
 
-                    {/* ---------------- KASIR (POS) ---------------- */}
-                    {currentView === 'pos' && (
+                    {/* ---------------- RFQ ---------------- */}
+                    {currentView === 'rfq' && (
                         <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
-                            <div className="mb-6">
-                                <h2 className="text-2xl font-bold text-slate-800">Kasir / Point of Sale</h2>
-                                <p className="text-gray-500 mt-1">Kelola transaksi pembelian offline secara langsung.</p>
-                            </div>
-                            <POSSystem />
+                            <RFQManager />
                         </div>
                     )}
 
-                    {/* ---------------- LAPORAN PENJUALAN ---------------- */}
-                    {currentView === 'report' && (
+                    {/* ---------------- KONTRAK ---------------- */}
+                    {currentView === 'contracts' && (
                         <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
-                            <div className="mb-6">
-                                <h2 className="text-2xl font-bold text-slate-800">Laporan Penjualan</h2>
-                                <p className="text-gray-500 mt-1">Rekapitulasi omset dan riwayat transaksi.</p>
-                            </div>
-                            <SalesReport />
+                            <ContractManager />
+                        </div>
+                    )}
+
+                    {/* ---------------- PANEN ---------------- */}
+                    {currentView === 'harvest' && (
+                        <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
+                            <HarvestManager />
                         </div>
                     )}
 

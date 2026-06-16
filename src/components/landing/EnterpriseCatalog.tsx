@@ -5,28 +5,28 @@ import {
     Filter, Grid, List, Download, ChevronDown, CheckCircle,
     TrendingUp, Calendar, Package, ArrowRight, Activity, Droplets, ShoppingCart
 } from 'lucide-react';
-import { createClient } from '@/lib/supabase/client'; 
 import { useCart } from '@/context/CartContext';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
+import { getProducts } from '@/core/actions/product.action';
 
 type Product = {
     id: number;
     name: string;
-    category: string;
-    price: number;
-    stock: number;
+    variety_type: string;
+    price_per_ton: string;
+    supply_cap_ton_week: string;
     grade: string;
-    image_url: string;
-    brix: string;      
-    moq: string;        
-    description: string;
+    image_url: string | null;
+    avg_brix_min: number;      
+    avg_brix_max: number;      
+    moq_kg: number;        
+    status: string;
 };
 
 export default function EnterpriseCatalog() {
     const router = useRouter();
     const { addToCart } = useCart();
-    const supabase = createClient(); 
 
     const [viewMode, setViewMode] = useState<'grid' | 'table'>('grid');
     const [products, setProducts] = useState<Product[]>([]);
@@ -35,35 +35,20 @@ export default function EnterpriseCatalog() {
 
     useEffect(() => {
         const fetchData = async () => {
-            const { data, error } = await supabase
-                .from('products')
-                .select('*')
-                .order('id', { ascending: true });
-
-            if (data) {
-                setProducts(data);
-            }
+            const data = await getProducts();
+            setProducts(data as unknown as Product[]);
             setLoading(false);
         };
 
         fetchData();
-
-        const channel = supabase
-            .channel('public-catalog')
-            .on('postgres_changes', { event: '*', schema: 'public', table: 'products' }, (payload) => {
-                fetchData();
-            })
-            .subscribe();
-
-        return () => { supabase.removeChannel(channel); };
     }, []);
 
     const filteredProducts = products.filter(p => {
-        return (filterCategory === 'All' || p.category === filterCategory);
+        return (filterCategory === 'All' || p.variety_type === filterCategory);
     });
 
     const handleRequestQuote = (product: Product) => {
-        if (product.stock <= 0) return;
+        if (product.status !== 'available') return;
         addToCart(product);
         router.push('/checkout');
     };
@@ -98,8 +83,8 @@ export default function EnterpriseCatalog() {
                     <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                         {[
                             { label: 'Total Varietas', value: `${products.length} Jenis`, icon: Package, color: 'text-blue-600', bg: 'bg-blue-50' },
-                            { label: 'Stok Siap Kirim', value: `${products.reduce((acc, curr) => acc + curr.stock, 0)} Unit`, icon: CheckCircle, color: 'text-emerald-600', bg: 'bg-emerald-50' },
-                            { label: 'Forecast Mingguan', value: '+200 Unit', icon: TrendingUp, color: 'text-purple-600', bg: 'bg-purple-50' },
+                            { label: 'Stok Siap Kirim', value: `${products.reduce((acc, curr) => acc + (curr.status === 'available' ? Number(curr.supply_cap_ton_week) : 0), 0)} Ton`, icon: CheckCircle, color: 'text-emerald-600', bg: 'bg-emerald-50' },
+                            { label: 'Forecast Mingguan', value: '+20 Ton', icon: TrendingUp, color: 'text-purple-600', bg: 'bg-purple-50' },
                             { label: 'Konsistensi Brix', value: '94% Stabil', icon: Activity, color: 'text-orange-600', bg: 'bg-orange-50' },
                         ].map((stat, idx) => (
                             <div key={idx} className="bg-white border border-gray-100 p-5 rounded-xl shadow-sm flex items-center gap-4">
@@ -157,7 +142,7 @@ export default function EnterpriseCatalog() {
 
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
                         {filteredProducts.map(p => (
-                            <div key={p.id} className={`group bg-white rounded-2xl border border-gray-200 overflow-hidden hover:shadow-xl hover:border-emerald-200 transition-all duration-300 flex flex-col ${p.stock <= 0 ? 'opacity-75 grayscale' : ''}`}>
+                            <div key={p.id} className={`group bg-white rounded-2xl border border-gray-200 overflow-hidden hover:shadow-xl hover:border-emerald-200 transition-all duration-300 flex flex-col ${p.status !== 'available' ? 'opacity-75 grayscale' : ''}`}>
                                 <div className="relative h-64 bg-gray-100 overflow-hidden flex items-center justify-center">
                                     {p.image_url ? (
                                         <Image src={p.image_url} alt={p.name} fill className="object-cover group-hover:scale-105 transition duration-700" />
@@ -168,9 +153,9 @@ export default function EnterpriseCatalog() {
                                         <span className="bg-white/90 backdrop-blur text-slate-900 text-xs font-bold px-3 py-1 rounded-md shadow-sm border border-gray-100">
                                             {p.grade} Premium
                                         </span>
-                                        {p.stock > 0 ? (
-                                            <span className={`text-white text-xs font-bold px-3 py-1 rounded-md shadow-sm ${p.stock < 10 ? 'bg-amber-500' : 'bg-emerald-500'}`}>
-                                                {p.stock < 10 ? `Sisa ${p.stock}` : 'Ready Stock'}
+                                        {p.status === 'available' ? (
+                                            <span className={`text-white text-xs font-bold px-3 py-1 rounded-md shadow-sm bg-emerald-500`}>
+                                                Ready Stock
                                             </span>
                                         ) : (
                                             <span className="bg-red-500 text-white text-xs font-bold px-3 py-1 rounded-md shadow-sm">
@@ -183,23 +168,23 @@ export default function EnterpriseCatalog() {
                                 <div className="p-6 flex-1 flex flex-col">
                                     <div className="mb-4">
                                         <h3 className="text-xl font-bold text-slate-900">{p.name}</h3>
-                                        <p className="text-sm text-gray-500 mt-1">{p.category}</p>
+                                        <p className="text-sm text-gray-500 mt-1">{p.variety_type}</p>
                                     </div>
 
                                     <div className="grid grid-cols-2 gap-y-4 gap-x-2 text-sm border-t border-b border-gray-100 py-4 mb-6">
                                         <div>
                                             <p className="text-gray-400 text-xs uppercase font-bold">Avg Brix</p>
                                             <p className="font-semibold text-slate-800 flex items-center gap-1">
-                                                <Droplets size={12} className="text-emerald-500" /> {p.brix || '-'}
+                                                <Droplets size={12} className="text-emerald-500" /> {p.avg_brix_min}-{p.avg_brix_max}
                                             </p>
                                         </div>
                                         <div>
-                                            <p className="text-gray-400 text-xs uppercase font-bold">Stok Gudang</p>
-                                            <p className={`font-bold ${p.stock > 0 ? 'text-slate-800' : 'text-red-500'}`}>{p.stock} Unit</p>
+                                            <p className="text-gray-400 text-xs uppercase font-bold">Suplai Max</p>
+                                            <p className={`font-bold text-slate-800`}>{p.supply_cap_ton_week} Ton/Minggu</p>
                                         </div>
                                         <div>
                                             <p className="text-gray-400 text-xs uppercase font-bold">MOQ</p>
-                                            <p className="font-semibold text-slate-800">{p.moq || '-'}</p>
+                                            <p className="font-semibold text-slate-800">{p.moq_kg} Kg</p>
                                         </div>
                                         <div>
                                             <p className="text-gray-400 text-xs uppercase font-bold">Harvest ETA</p>
@@ -210,18 +195,18 @@ export default function EnterpriseCatalog() {
                                     {/* Pricing & CTA */}
                                     <div className="mt-auto flex items-center justify-between">
                                         <div>
-                                            <p className="text-xs text-gray-400">Harga / Unit</p>
-                                            <p className="text-lg font-bold text-slate-900">Rp {p.price.toLocaleString()}</p>
+                                            <p className="text-xs text-gray-400">Harga / Ton</p>
+                                            <p className="text-lg font-bold text-slate-900">Rp {Number(p.price_per_ton).toLocaleString()}</p>
                                         </div>
                                         <button
                                             onClick={() => handleRequestQuote(p)}
-                                            disabled={p.stock <= 0}
-                                            className={`px-5 py-2.5 text-white font-bold rounded-lg transition shadow-lg flex items-center gap-2 ${p.stock > 0
+                                            disabled={p.status !== 'available'}
+                                            className={`px-5 py-2.5 text-white font-bold rounded-lg transition shadow-lg flex items-center gap-2 ${p.status === 'available'
                                                     ? 'bg-emerald-600 hover:bg-emerald-700 shadow-emerald-100'
                                                     : 'bg-gray-400 cursor-not-allowed'
                                                 }`}
                                         >
-                                            {p.stock > 0 ? <><ShoppingCart size={16} /> + Keranjang</> : 'Habis'}
+                                            {p.status === 'available' ? <><ShoppingCart size={16} /> + Keranjang</> : 'Habis'}
                                         </button>
                                     </div>
                                 </div>
@@ -238,8 +223,8 @@ export default function EnterpriseCatalog() {
                                     <th className="p-4">Varietas</th>
                                     <th className="p-4">Grade</th>
                                     <th className="p-4">Brix</th>
-                                    <th className="p-4">Stock</th>
-                                    <th className="p-4">Harga</th>
+                                    <th className="p-4">Suplai Max</th>
+                                    <th className="p-4">Harga / Ton</th>
                                     <th className="p-4 text-right">Action</th>
                                 </tr>
                             </thead>
@@ -253,16 +238,16 @@ export default function EnterpriseCatalog() {
                                             {p.name}
                                         </td>
                                         <td className="p-4"><span className="bg-emerald-100 text-emerald-700 px-2 py-1 rounded text-xs font-bold">{p.grade}</span></td>
-                                        <td className="p-4 text-slate-600">{p.brix}</td>
-                                        <td className={`p-4 font-bold ${p.stock < 10 ? 'text-amber-600' : 'text-emerald-600'}`}>{p.stock}</td>
-                                        <td className="p-4 font-mono">Rp {p.price.toLocaleString()}</td>
+                                        <td className="p-4 text-slate-600">{p.avg_brix_min}-{p.avg_brix_max}</td>
+                                        <td className={`p-4 font-bold text-slate-600`}>{p.supply_cap_ton_week} Ton/Minggu</td>
+                                        <td className="p-4 font-mono">Rp {Number(p.price_per_ton).toLocaleString()}</td>
                                         <td className="p-4 text-right">
                                             <button
                                                 onClick={() => handleRequestQuote(p)}
-                                                disabled={p.stock <= 0}
-                                                className={`font-bold hover:underline ${p.stock > 0 ? 'text-emerald-600' : 'text-gray-400'}`}
+                                                disabled={p.status !== 'available'}
+                                                className={`font-bold hover:underline ${p.status === 'available' ? 'text-emerald-600' : 'text-gray-400'}`}
                                             >
-                                                {p.stock > 0 ? 'Add to Cart' : 'Sold Out'}
+                                                {p.status === 'available' ? 'Add to Cart' : 'Sold Out'}
                                             </button>
                                         </td>
                                     </tr>

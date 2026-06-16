@@ -1,6 +1,6 @@
 'use client';
 
-import { supabase } from '@/lib/supabase';
+import { clearSession } from '@/core/actions/session.action';
 import { useRouter } from 'next/navigation';
 import { LogOut, User } from 'lucide-react';
 
@@ -8,7 +8,7 @@ export default function UserNav() {
     const router = useRouter();
 
     const handleLogout = async () => {
-        await supabase.auth.signOut();
+        await clearSession();
         router.push('/login');
         router.refresh();
     };

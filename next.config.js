@@ -3,7 +3,7 @@ const nextConfig = {
   typescript: {
     ignoreBuildErrors: true,
   },
-
+  serverExternalPackages: ['lightningcss'],
   images: {
     remotePatterns: [
       {

@@ -3,7 +3,8 @@
 import Navbar from '@/components/Navbar';
 import WholesaleCard from '@/components/b2b/wholeSaleCard';
 import ProcurementAI from '@/components/b2b/ProcurementAI';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { getProducts } from '@/core/actions/product.action';
 import { Filter, ChevronDown, TrendingUp, Calendar, Package, Download } from 'lucide-react';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 
@@ -15,47 +16,34 @@ const PRICE_DATA = [
     { name: 'Week 5', price: 13.2 }, 
 ];
 
-const PRODUCTS = [
-    {
-        id: 1,
-        name: "Golden Apollo Premium",
-        grade: "AA",
-        brix: "14-16",
-        moq: 1000,
-        price_ton: 13500000,
-        capacity_week: 8,
-        lead_time: "3 Hari",
-        image_url: "https://images.unsplash.com/photo-1571575173700-afb9492e6a50?w=600&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8Mnx8bWVsb258ZW58MHx8MHx8fDA%3D",
-        seasonality: "Stabil (IoT)"
-    },
-    {
-        id: 2,
-        name: "Inthanon Royal Net",
-        grade: "A",
-        brix: "13-15",
-        moq: 500,
-        price_ton: 15000000,
-        capacity_week: 5,
-        lead_time: "5 Hari",
-        image_url: "https://images.unsplash.com/photo-1661193320145-2252cbfa7755?w=600&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8OHx8bWVsb258ZW58MHx8MHx8fDA%3D",
-        seasonality: "High Demand"
-    },
-    {
-        id: 3,
-        name: "Sweet Net",
-        grade: "A",
-        brix: "12-14",
-        moq: 1500,
-        price_ton: 10000000,
-        capacity_week: 4,
-        lead_time: "4 Hari",
-        image_url: "https://images.unsplash.com/photo-1563288525-8f1ee0f874a8?w=600&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8NHx8bWVsb258ZW58MHx8MHx8fDA%3D",
-        seasonality: "High Demand"
-    },
-    
-];
-
 export default function WholesaleCatalog() {
+    const [products, setProducts] = useState<any[]>([]);
+    const [loading, setLoading] = useState(true);
+
+    useEffect(() => {
+        const fetchProducts = async () => {
+            const data = await getProducts();
+            if (data) {
+                const mappedProducts = data.map((p: any) => ({
+                    id: p.id,
+                    name: p.name,
+                    grade: p.grade || "A",
+                    brix: `${p.avg_brix_min}-${p.avg_brix_max}`,
+                    moq: p.moq_kg || 500,
+                    price_ton: Number(p.price_per_ton), 
+                    capacity_week: p.status === 'available' ? Number(p.supply_cap_ton_week) : 0, 
+                    lead_time: p.status === 'available' ? "Ready" : "Habis",
+                    image_url: p.image_url || "https://images.unsplash.com/photo-1571575173700-afb9492e6a50?auto=format&fit=crop&w=600&q=60",
+                    seasonality: p.variety_type || "General"
+                }));
+                setProducts(mappedProducts);
+            }
+            setLoading(false);
+        };
+        
+        fetchProducts();
+    }, []);
+
     return (
         <main className="min-h-screen bg-slate-50 font-sans text-slate-900 pb-20">
             <Navbar />
@@ -180,16 +168,20 @@ export default function WholesaleCatalog() {
                 {/* RIGHT CONTENT (PRODUCT GRID) */}
                 <div className="flex-1">
                     <div className="flex justify-between items-center mb-6">
-                        <p className="text-sm text-slate-500">Menampilkan <span className="font-bold text-slate-900">{PRODUCTS.length} Varietas</span> Grosir</p>
+                        <p className="text-sm text-slate-500">Menampilkan <span className="font-bold text-slate-900">{products.length} Varietas</span> Grosir</p>
                         <button className="flex items-center gap-2 text-sm font-bold text-slate-700 bg-white border border-gray-200 px-4 py-2 rounded-lg hover:border-emerald-500 transition">
                             Urutkan: Popularitas <ChevronDown size={14} />
                         </button>
                     </div>
 
                     <div className="space-y-6">
-                        {PRODUCTS.map(product => (
-                            <WholesaleCard key={product.id} product={product} />
-                        ))}
+                        {loading ? (
+                            <div className="text-center py-10 text-gray-400 animate-pulse">Memuat katalog...</div>
+                        ) : (
+                            products.map(product => (
+                                <WholesaleCard key={product.id} product={product} />
+                            ))
+                        )}
                     </div>
                 </div>
 

@@ -3,16 +3,18 @@
 import Navbar from '@/components/Navbar';
 import { useCart } from '@/context/CartContext';
 import { Trash2, Plus, Minus, ShoppingBag, ArrowRight, ArrowLeft, Image as ImageIcon, MapPin } from 'lucide-react';
+import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useState } from 'react';
 import toast from 'react-hot-toast';
 
 export default function CheckoutPage() {
-    const { items, updateQuantity, removeFromCart, totalPrice } = useCart(); 
+    const { items, updateQuantity, removeFromCart, totalPrice, clearCart } = useCart(); 
     const [customerName, setCustomerName] = useState('');
     const [customerAddress, setCustomerAddress] = useState('');
     const [errors, setErrors] = useState({ name: false, address: false });
     const [isGenerating, setIsGenerating] = useState(false);
+    const router = useRouter();
 
     const formatRp = (num: number) => "Rp " + num.toLocaleString('id-ID');
 
@@ -34,36 +36,27 @@ export default function CheckoutPage() {
         }
 
         setIsGenerating(true);
-        const loadingToast = toast.loading("AI sedang mendeteksi lokasi maps...");
+        const loadingToast = toast.loading("Memproses Request For Quotation...");
 
         try {
-            const response = await fetch('/api/detect-location', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ address: customerAddress }),
-            });
-
-            const data = await response.json();
-            const mapLink = data.map_link || `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(customerAddress)}`;
-
-            let message = `Halo Central Melon, saya ingin memesan:\n\n`;
-            items.forEach((item, index) => {
-                message += `${index + 1}. ${item.name} (${item.grade}) - ${item.quantity}x @ ${formatRp(item.price)}\n`;
-            });
-            message += `\nTotal: *${formatRp(totalPrice)}*`;
-            message += `\n\n📋 Data Pemesan:`;
-            message += `\nNama: ${customerName}`;
-            message += `\nAlamat: ${customerAddress}`;
-            message += `\n\n📍 Lokasi Maps (AI Detected):\n${mapLink}`;
-            message += `\n\nMohon diproses, terima kasih!`;
-
-            const encodedMessage = encodeURIComponent(message);
-            window.open(`https://wa.me/6285709477872?text=${encodedMessage}`, '_blank');
-
-            toast.success("Mengarahkan ke WhatsApp...", { id: loadingToast });
+            // Import action dynamically to avoid use client issues if needed, or import at top
+            const { submitCheckoutRfqs } = await import('@/core/actions/rfq.action');
+            
+            const result = await submitCheckoutRfqs(items, customerAddress, customerName);
+            
+            if (result.success) {
+                toast.success("RFQ Berhasil Dikirim!", { id: loadingToast });
+                clearCart();
+                router.push('/supplier');
+            } else {
+                toast.error(result.error || "Gagal mengirim RFQ", { id: loadingToast });
+                if (result.error?.includes('Unauthorized')) {
+                    router.push('/login');
+                }
+            }
 
         } catch (error) {
-            toast.error("Gagal generate maps, menggunakan alamat teks.", { id: loadingToast });
+            toast.error("Terjadi kesalahan sistem.", { id: loadingToast });
         } finally {
             setIsGenerating(false);
         }
@@ -191,11 +184,11 @@ export default function CheckoutPage() {
                                     {isGenerating ? (
                                         <span className="flex items-center gap-2 animate-pulse">Mendeteksi Lokasi...</span>
                                     ) : (
-                                        <>Checkout WhatsApp <ArrowRight size={20} className="group-hover:translate-x-1 transition-transform" /></>
+                                        <>Submit RFQ Request <ArrowRight size={20} className="group-hover:translate-x-1 transition-transform" /></>
                                     )}
                                 </button>
                                 <p className="text-xs text-gray-400 text-center mt-4 leading-relaxed">
-                                    Pesanan akan diteruskan ke Admin untuk konfirmasi stok & hitung ongkir.
+                                    RFQ akan diteruskan ke Admin Central Melon untuk konfirmasi ketersediaan & kontrak.
                                 </p>
                             </div>
                         </div>

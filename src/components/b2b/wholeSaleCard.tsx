@@ -3,6 +3,8 @@
 import { FileText, Truck, BarChart3, Calendar, ArrowRight, ShieldCheck } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
+import { useCart } from '@/context/CartContext';
+import { useRouter } from 'next/navigation';
 
 interface ProductB2B {
     id: number;
@@ -15,9 +17,27 @@ interface ProductB2B {
     lead_time: string;
     image_url: string;
     seasonality: string;
+    variety_type?: string;
+    status?: string;
 }
 
 export default function WholesaleCard({ product }: { product: ProductB2B }) {
+    const { addToCart } = useCart();
+    const router = useRouter();
+
+    const handleRequestQuote = () => {
+        // Format product object to match what CartContext expects
+        addToCart({
+            id: product.id,
+            name: product.name,
+            price: product.price_ton,
+            moq: `${product.moq} Kg`,
+            image_url: product.image_url,
+            category: product.variety_type || "Premium Melon",
+            grade: product.grade,
+        });
+        router.push('/checkout');
+    };
     return (
         <div className="bg-white border border-gray-200 rounded-xl hover:border-emerald-500 transition-all duration-300 hover:shadow-lg group flex flex-col md:flex-row overflow-hidden">
             <div className="w-full md:w-48 h-48 md:h-auto relative bg-gray-100 shrink-0">
@@ -70,13 +90,17 @@ export default function WholesaleCard({ product }: { product: ProductB2B }) {
                 </div>
 
                 <div className="flex flex-wrap gap-3 mt-2 pt-4 border-t border-gray-100">
-                    <a
-                        href={`https://wa.me/6285709477872?text=Halo%20Central%20Melon,%20saya%20ingin%20RFQ%20untuk%20${product.name}%20Grade%20${product.grade}.`}
-                        target="_blank"
-                        className="flex-1 bg-slate-900 hover:bg-slate-800 text-white px-4 py-2.5 rounded-lg text-sm font-bold flex items-center justify-center gap-2 transition"
+                    <button
+                        onClick={handleRequestQuote}
+                        disabled={product.capacity_week <= 0}
+                        className={`flex-1 px-4 py-2.5 rounded-lg text-sm font-bold flex items-center justify-center gap-2 transition ${
+                            product.capacity_week > 0 
+                            ? 'bg-slate-900 hover:bg-slate-800 text-white shadow-lg' 
+                            : 'bg-gray-200 text-gray-400 cursor-not-allowed'
+                        }`}
                     >
                         <FileText size={16} /> Request Quotation (RFQ)
-                    </a>
+                    </button>
                     <button className="px-4 py-2.5 border border-slate-200 text-slate-700 font-bold rounded-lg text-sm hover:bg-slate-50 transition flex items-center gap-2">
                         <Truck size={16} /> Sample Batch
                     </button>
