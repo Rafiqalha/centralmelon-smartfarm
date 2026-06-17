@@ -47,3 +47,17 @@ Desktop.ini
 # IDE Settings
 .vscode/
 .idea/
+
+# Laporan, tugas, dan dokumen (jangan di-push)
+*.pdf
+*.doc
+*.docx
+TUGAS.md
+PRD.md
+
+# Sembunyikan semua .md kecuali README.md
+*.md
+!README.md
+
+# File junk lainnya
+-files --stage  grep .env
